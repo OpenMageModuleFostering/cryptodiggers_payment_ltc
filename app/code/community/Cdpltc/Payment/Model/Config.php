@@ -10,7 +10,9 @@ class Cdpltc_Payment_Model_Config
     {
         return array(
             '1' => 'EUR',
-            '2' => 'USD'
+            '2' => 'USD',
+            '3' => 'GBP',
+            '9' => 'JPY'
         );
     }
 }
