@@ -31,6 +31,7 @@ class Cdpltc_Payment_Block_Payment extends Mage_Checkout_Block_Onepage_Payment
 		$quote->reserveOrderId()->save();
 
 		$data="https://www.cryptodiggers.eu/api/api.php?apikey=".Mage::getStoreConfig('payment/cdpltc_payment/api_key')."&a=eshop_payment&timeout=".Mage::getStoreConfig('payment/cdpltc_payment/payment_timeout')."&order_id=".$quote->getReservedOrderId()."&amount=".number_format($this->roundup_prec($quote->getGrandTotal(),2), 2, '.', '')."&currency=".Mage::getStoreConfig('payment/cdpltc_payment/fiat_currency')."&currency_crypto=8&wait=".Mage::getStoreConfig('payment/cdpltc_payment/wait_confirmations');
+		//$data="http://192.168.0.10/wallet/api.php?apikey=".Mage::getStoreConfig('payment/cdpltc_payment/api_key')."&a=eshop_payment&timeout=".Mage::getStoreConfig('payment/cdpltc_payment/payment_timeout')."&order_id=".$quote->getReservedOrderId()."&amount=".number_format($this->roundup_prec($quote->getGrandTotal(),2), 2, '.', '')."&currency=".Mage::getStoreConfig('payment/cdpltc_payment/fiat_currency')."&currency_crypto=8&wait=".Mage::getStoreConfig('payment/cdpltc_payment/wait_confirmations');
 		$retVal=$this->getApi($data);
 		//echo $data;
 		unset($data);
@@ -40,6 +41,7 @@ class Cdpltc_Payment_Block_Payment extends Mage_Checkout_Block_Onepage_Payment
 		if($retVal){
 			if($retVal["error"]==0){
 				$data["link"]="https://www.cryptodiggers.eu/api/api.php?iframe=".$retVal["iframe_id"]."&a=eshop_payment&timeout=".
+				//$data["link"]="http://192.168.0.10/wallet/api.php?iframe=".$retVal["iframe_id"]."&a=eshop_payment&timeout=".
 				Mage::getStoreConfig('payment/cdpltc_payment/payment_timeout')."&order_id=".$quote->getReservedOrderId()."
 				&amount=".number_format($this->roundup_prec($quote->getGrandTotal(),2), 2, '.', '')."
 				&currency=".Mage::getStoreConfig('payment/cdpltc_payment/fiat_currency')."
@@ -62,6 +64,9 @@ class Cdpltc_Payment_Block_Payment extends Mage_Checkout_Block_Onepage_Payment
 	}
 
 	private function getApi($target,$post=NULL, $auth=NULL) {
+		$proxy_use=Mage::getStoreConfig('payment/cdpltc_payment/proxy_use');
+		$proxy_server=Mage::getStoreConfig('payment/cdpltc_payment/proxy_server');
+		$proxy_port=Mage::getStoreConfig('payment/cdpltc_payment/proxy_port');
 		static $ch = null;
 		static $ch = null;
 		$url=$target;
@@ -69,7 +74,10 @@ class Cdpltc_Payment_Block_Payment extends Mage_Checkout_Block_Onepage_Payment
 			$ch = curl_init();
 			curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 30);
 			curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-
+			if($proxy_use==1){
+				curl_setopt($ch, CURLOPT_PROXY, $proxy_server);
+				curl_setopt($ch, CURLOPT_PROXYPORT, $proxy_port);
+			}
 			curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 			curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/4.0 (compatible; PHP client; '.php_uname('s').'; PHP/'.phpversion().')');
 		}
@@ -81,6 +89,8 @@ class Cdpltc_Payment_Block_Payment extends Mage_Checkout_Block_Onepage_Payment
 		curl_setopt($ch, CURLOPT_URL, $url . $target);
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
 
+		//echo $target;
+
 		$res = curl_exec($ch);
 		if ($res === false) {
 			return false;
@@ -91,4 +101,5 @@ class Cdpltc_Payment_Block_Payment extends Mage_Checkout_Block_Onepage_Payment
 		}
 		return $dec;
 	}
+
 }
